@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.8.0
+    container_name: ogya-zookeeper
+    restart: always
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ogya-network
+  kafka1:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: ogya-kafka1
+    restart: always
+    ports:
+      - 19091:19091
+    networks:
+      - ogya-network
+    volumes:
+      - /opt/kafka-data/1/data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:19091", "--list"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+      start_period: 10s
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_EXTERNAL://0.0.0.0:19091
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_EXTERNAL://172.18.242.22:19091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  topic-file-order-init:
+    image: confluentinc/cp-kafka:7.8.0
+    depends_on:
+      kafka1:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "kafka-topics --create --topic file-order --bootstrap-server kafka1:29092 --replication-factor 1 --partitions 18 --if-not-exists"
+    networks:
+      - ogya-network
+
+  topic-file-upload-init:
+    image: confluentinc/cp-kafka:7.8.0
+    depends_on:
+      kafka1:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "kafka-topics --create --topic file-upload --bootstrap-server kafka1:29092 --replication-factor 1 --partitions 9 --if-not-exists"
+    networks:
+      - ogya-network
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    container_name: telkom-schema-registry
+    restart: always
+    ports:
+      - 6969:6969
+    depends_on:
+      kafka1:
+        condition: service_healthy
+      topic-file-order-init:
+        condition: service_completed_successfully
+      topic-file-upload-init:
+        condition: service_completed_successfully
+    networks:
+      - ogya-network
+    environment:
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:6969
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:29092
+
+networks:
+  ogya-network:

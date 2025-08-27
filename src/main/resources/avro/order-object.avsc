@@ -1,0 +1,19 @@
+{
+    "type": "record",
+    "name": "OrderObject",
+    "namespace": "com.ogya.logging.avro.schema",
+    "fields": [
+        {
+            "name": "timestamp",
+            "type": "long"
+        },
+        {
+            "name": "username",
+            "type": "string"
+        },
+        {
+            "name": "statusId",
+            "type": "string"
+        }
+    ]
+}

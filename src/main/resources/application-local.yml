@@ -1,0 +1,65 @@
+server:
+  port: 8087
+  tomcat:
+    min-spare: 25
+    max-threads: 750
+spring:
+  application:
+    name: voltage-key-cache
+  kafka:
+    bootstrap-servers: 172.18.242.22:19091
+    schema-registry-servers: http://172.18.242.22:6969
+    producer:
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      batch-size: 64KB
+      buffer-memory: 64MB
+      linger-ms: 10
+      max-block-ms: 60000
+      retries: 10
+    listener:
+      ack-mode: record
+
+logging:
+  level:
+    root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,refresh,health,bus-refresh,busrefresh
+
+  endpoint:
+    refresh:
+      enabled: true
+config:
+  voltage:
+    PolicyUrl: https://voltage-pp-0000.opentext.co.id/policy/clientPolicy.xml
+    TrustStorePath: /opt/voltage/simpleapi/trustStore-cloud
+    BasePath: /opt/voltage/simpleapi
+    SharedSecret: voltage123
+    AlphanumericFormat: alphanumeric
+    NumericFormat: numeric
+    AlphaFormat: alpha
+    ClientId: Simple_API_Java_Date_Sample
+    ClientIdVersion: 6.22.0.0
+  datasource:
+    KeyDatasource:
+      Enabled: true
+      IdleTimeout: 900000
+      JdbcUrl: jdbc:postgresql://172.18.242.22:5432/postgres #192.168.181.133 #172.10.10.22
+      Username: postgres
+      MaxLifetime: 1800000
+      TestQuery: SELECT 1
+      Password: 123123 #devtyk1#!
+      MinimumIdle: 1
+      DriverClass: org.postgresql.Driver
+      PoolName: KeyDatasource
+      MaximumPoolSize: 200
+      AutoCommit: true
+      ConnectionTimeout: 500
+  kafka:
+    topic-name-1: file-order
+    topic-name-2: file-upload
