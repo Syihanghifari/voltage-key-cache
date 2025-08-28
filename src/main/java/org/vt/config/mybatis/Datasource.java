@@ -112,14 +112,37 @@ public class Datasource {
     }
 
     public static HikariDataSource getDatasource(String dsName) throws NoSuchFieldException {
-        HikariDataSource result = null;
+        HikariDataSource ds = dsCache.getIfPresent(dsName);
 
-        if (dsCache.getIfPresent(dsName) != null) {
-            result = dsCache.getIfPresent(dsName);
-        } else {
-            throw new NoSuchFieldException("Datasource " + dsName + " not found");
+        if (ds != null) {
+            return ds;
         }
-        return result;
+
+        try {
+            ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+            DatasourceProperties props = context.getBean(DatasourceProperties.class);
+
+            Map<String, Map<String, String>> allConfigs = props.getDatasource();
+            Map<String, String> dsConf = allConfigs.get(dsName);
+
+            if (dsConf != null) {
+                logger.warn("Datasource {} missing from cache. Attempting to reinitialize...", dsName);
+                addDatasource(dsName, dsConf, context);
+                ds = dsCache.getIfPresent(dsName);
+
+                if (ds != null) {
+                    logger.info("Datasource {} reinitialized successfully.", dsName);
+                    return ds;
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Failed to reinitialize datasource {}: {}", dsName, e.getMessage(), e);
+            throw new NoSuchFieldException("Datasource " + dsName + " not found and reinitialization failed.");
+        }
+
+        // 3. If still not found, throw
+        throw new NoSuchFieldException("Datasource " + dsName + " not found after attempted reinitialization.");
     }
 
     public static void killAllDatasouce() {

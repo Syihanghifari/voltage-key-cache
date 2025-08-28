@@ -1,9 +1,18 @@
 package org.vt.config.mybatis.entity;
 
 public class SdaConfig {
+    private String configId;
     private String region;
     private String code;
     private String sharedSecret;
+
+    public String getConfigId() {
+        return configId;
+    }
+
+    public void setConfigId(String configId) {
+        this.configId = configId;
+    }
 
     public String getRegion() {
         return region;

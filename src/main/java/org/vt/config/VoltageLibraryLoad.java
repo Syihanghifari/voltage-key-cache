@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 public class VoltageLibraryLoad {
     private Logger logger = LoggerFactory.getLogger(VoltageLibraryLoad.class);
 
-//    static {
-//        System.loadLibrary("vibesimplejava");
-//    }
+    static {
+        System.loadLibrary("vibesimplejava");
+    }
 
 }

@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow CORS preflight
                 .antMatchers("/voltage-key-cache/**").authenticated()
                 .antMatchers("/file/**").authenticated()
+                .antMatchers("/config/**").authenticated()
                 .anyRequest().permitAll()
                 .and()
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

@@ -40,7 +40,7 @@ public class FileServiceImpl implements FileService {
                 .setStatusId(uuid)
                 .build();
 
-        kafkaProducerService.send(orderObject);
+        //kafkaProducerService.send(orderObject);
 
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
@@ -56,7 +56,7 @@ public class FileServiceImpl implements FileService {
 
             session.commit();
         }catch (Exception e) {
-            logger.error("get data failed", e);
+            logger.error("insert data failed", e);
             throw new RuntimeException(e);
         }
         return ResponseEntity.ok(new MessageResponse("Succes Ordering CSV File"));

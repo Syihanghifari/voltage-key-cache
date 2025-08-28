@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface UserMapper {
     final String GET_USER_BY_USERNAME = "SELECT * FROM users WHERE username = #{username}";
+    final String GET_ALL_USER = "SELECT * FROM users";
     final String GET_USER_ROLES = "SELECT r.id, r.name FROM roles r " +
             "JOIN user_roles ur ON r.id = ur.role_id " +
             "WHERE ur.user_id = #{userId}";
@@ -34,6 +35,15 @@ public interface UserMapper {
             @Result(property = "configId", column = "config_id")
     })
     User getUserByUsername(String username);
+
+    @Select(GET_ALL_USER)
+    @Results({
+            @Result(property = "id", column = "id"),
+            @Result(property = "username", column = "username"),
+            @Result(property = "createdAt", column = "created_at"),
+            @Result(property = "configId", column = "config_id")
+    })
+    List<User> getAllUser();
 
     @Select(GET_USER_ROLES)
     List<Role> getUserRoles(Long userId);

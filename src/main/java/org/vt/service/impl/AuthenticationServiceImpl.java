@@ -60,7 +60,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             List<Permissions> listPermissions = userMapper.getUserPermissions(user.getId());
             List<Menus> listMenus = new ArrayList<>();
             for(Permissions permissions: listPermissions){
-                listMenus.add(userMapper.getMenusByPermissionsId(permissions.getPermissionsId()));
+                Menus menu = userMapper.getMenusByPermissionsId(permissions.getPermissionsId());
+                if (menu != null) {
+                    listMenus.add(menu);
+                }
             }
 
             String token = jwtUtil.generateToken(user.getUsername(), roleNames);
@@ -98,5 +101,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             logger.error("get data failed", e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public  ResponseEntity<List<User>> getAllUser (){
+        MyBatisUtils myBatisUtils = new MyBatisUtils();
+        SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
+        List<User> listUser = new ArrayList<>();
+        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+            UserMapper userMapper = myBatisUtils.createMapper(UserMapper.class, session);
+            listUser = userMapper.getAllUser();
+        }catch (Exception e) {
+            logger.error("get data failed", e);
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(listUser);
     }
 }

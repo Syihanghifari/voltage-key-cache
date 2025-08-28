@@ -54,7 +54,7 @@ public class CacheMakerServiceImpl implements CacheMakerService {
 
             //branch.<region>.<code>@transit.file
             String wilayah = sdaConfig.getRegion();
-            String identity = "branch." + sdaConfig.getRegion()+sdaConfig.getCode() + "@transit.file";
+            String identity = "branch." + sdaConfig.getRegion()+"."+sdaConfig.getCode() + "@transit.file";
             String cachePath = getCachePath(identity,wilayah);
 
             getZipFile(response,cachePath,wilayah);
@@ -102,6 +102,12 @@ public class CacheMakerServiceImpl implements CacheMakerService {
         FPE fpe     = null;
 
         String cachePath = voltageProperties.getBasePath() + "/" +wilayah;
+
+        logger.info("policyUrl is : " + voltageProperties.getPolicyUrl());
+        logger.info("trustore path is : " + voltageProperties.getTrustStorePath());
+        logger.info("format is : " + voltageProperties.getAlphanumericFormat());
+        logger.info("sharedsecret is : " + voltageProperties.getSharedSecret());
+        logger.info("cachepath is : " + cachePath);
 
         try{
             // Create the context for crypto operations
