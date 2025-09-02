@@ -29,8 +29,8 @@ public class FileController {
 
     @GetMapping("/get-status")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<CheckStatus>> getStatus(@RequestParam Long limit, @RequestParam Long offset){
-        return fileService.getCheckStatus(limit,offset);
+    public ResponseEntity<List<CheckStatus>> getStatus(Authentication authentication,@RequestParam Long limit, @RequestParam Long offset){
+        return fileService.getCheckStatus(authentication,limit,offset);
     }
 
 }

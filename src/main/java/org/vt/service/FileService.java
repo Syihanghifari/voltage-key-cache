@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface FileService {
     ResponseEntity<MessageResponse> orderCsv(Authentication authentication);
-    ResponseEntity<List<CheckStatus>> getCheckStatus(Long limit, Long offset);
+    ResponseEntity<List<CheckStatus>> getCheckStatus(Authentication authentication,Long limit, Long offset);
 }

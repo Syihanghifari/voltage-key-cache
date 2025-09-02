@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.vt.config.mybatis.MyBatisUtils;
 import org.vt.config.mybatis.entity.CheckStatus;
 import org.vt.config.mybatis.mapper.CheckStatusMapper;
+import org.vt.config.util.FileServiceException;
 import org.vt.model.MessageResponse;
 import org.vt.service.FileService;
 import org.vt.service.KafkaProducerService;
@@ -40,7 +41,7 @@ public class FileServiceImpl implements FileService {
                 .setStatusId(uuid)
                 .build();
 
-        //kafkaProducerService.send(orderObject);
+        kafkaProducerService.send(orderObject);
 
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
@@ -56,24 +57,23 @@ public class FileServiceImpl implements FileService {
 
             session.commit();
         }catch (Exception e) {
-            logger.error("insert data failed", e);
-            throw new RuntimeException(e);
+            throw new FileServiceException(e);
         }
-        return ResponseEntity.ok(new MessageResponse("Succes Ordering CSV File"));
+        return ResponseEntity.ok(new MessageResponse("Succes Ordering CSV File With Status id " + uuid));
     }
 
     @Override
-    public ResponseEntity<List<CheckStatus>> getCheckStatus(Long limit, Long offset){
+    public ResponseEntity<List<CheckStatus>> getCheckStatus(Authentication authentication,Long limit, Long offset){
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
+        String username = authentication.getName();
         try(SqlSession session = sqlSessionFactory.openSession(false)){
             CheckStatusMapper checkStatusMapper = myBatisUtils.createMapper(CheckStatusMapper.class,session);
-            List<CheckStatus> listCheckStatus = checkStatusMapper.getAllCheckStatus(limit,offset);
+            List<CheckStatus> listCheckStatus = checkStatusMapper.getAllCheckStatusByUsername(username,limit,offset);
 
             return ResponseEntity.ok(listCheckStatus);
         }catch (Exception e) {
-            logger.error("get data failed", e);
-            throw new RuntimeException(e);
+            throw new FileServiceException(e);
         }
     }
 }

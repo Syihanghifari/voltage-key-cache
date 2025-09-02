@@ -9,12 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.vt.LRUCacheComponent;
 import org.vt.config.VoltageProperties;
 import org.vt.config.mybatis.MyBatisUtils;
 import org.vt.config.mybatis.entity.SdaConfig;
 import org.vt.config.mybatis.entity.User;
 import org.vt.config.mybatis.mapper.SdaConfigMapper;
-import org.vt.config.mybatis.mapper.UserMapper;
+import org.vt.config.util.CacheMakerException;
 import org.vt.service.CacheMakerService;
 
 import javax.servlet.ServletOutputStream;
@@ -27,13 +28,14 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @Service
 public class CacheMakerServiceImpl implements CacheMakerService {
 
-    private final Logger logger = LoggerFactory.getLogger("Voltage Backend Service");
+    private final Logger logger = LoggerFactory.getLogger("Cache Maker Service");
 
     private final VoltageProperties voltageProperties;
 
@@ -42,34 +44,32 @@ public class CacheMakerServiceImpl implements CacheMakerService {
     }
 
     @Override
-    public void getCacheZip(Authentication authentication, HttpServletResponse response){
+    public void getCacheZip(Authentication authentication, HttpServletResponse response) {
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
-        try(SqlSession session = sqlSessionFactory.openSession(false)){
-            UserMapper userMapper = myBatisUtils.createMapper(UserMapper.class, session);
-            User user = userMapper.getUserByUsername(authentication.getName());
+        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+            User user = LRUCacheComponent.getInstance().getUserByUsername(authentication.getName());
 
-            SdaConfigMapper sdaConfigMapper = myBatisUtils.createMapper(SdaConfigMapper.class,session);
+            SdaConfigMapper sdaConfigMapper = myBatisUtils.createMapper(SdaConfigMapper.class, session);
             SdaConfig sdaConfig = sdaConfigMapper.getSdaConfigByConfidId(user.getConfigId());
 
             //branch.<region>.<code>@transit.file
             String wilayah = sdaConfig.getRegion();
-            String identity = "branch." + sdaConfig.getRegion()+"."+sdaConfig.getCode() + "@transit.file";
-            String cachePath = getCachePath(identity,wilayah);
+            String identity = "branch." + sdaConfig.getRegion() + "." + sdaConfig.getCode() + "@transit.file";
+            String cachePath = getCachePath(identity, wilayah);
 
-            getZipFile(response,cachePath,wilayah);
+            getZipFile(response, cachePath, wilayah);
         } catch (Exception e) {
-            logger.error("get data failed", e);
-            throw new RuntimeException(e);
+            throw new CacheMakerException(e);
         }
     }
 
     @Override
-    public void getCacheZip(String identity, HttpServletResponse response){
+    public void getCacheZip(String identity, HttpServletResponse response) {
         String wilayah = extractWilayah(identity);
-        String cachePath = getCachePath(identity,wilayah);
+        String cachePath = getCachePath(identity, wilayah);
         Path zipPath = null;
-        try(ServletOutputStream out = response.getOutputStream()){
+        try (ServletOutputStream out = response.getOutputStream()) {
             if (cachePath == null || cachePath.isBlank()) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to generate cache");
                 return;
@@ -82,7 +82,7 @@ public class CacheMakerServiceImpl implements CacheMakerService {
 
             Files.copy(zipPath, out);
             out.flush();
-        }catch (IOException ex){
+        } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
             // Cleanup
@@ -97,25 +97,18 @@ public class CacheMakerServiceImpl implements CacheMakerService {
         }
     }
 
-    private String getCachePath(String identity,String wilayah){
+    private String getCachePath(String identity, String wilayah) {
         LibraryContext library = null;
-        FPE fpe     = null;
+        FPE fpe = null;
 
-        String cachePath = voltageProperties.getBasePath() + "/" +wilayah;
-
-        logger.info("policyUrl is : " + voltageProperties.getPolicyUrl());
-        logger.info("trustore path is : " + voltageProperties.getTrustStorePath());
-        logger.info("format is : " + voltageProperties.getAlphanumericFormat());
-        logger.info("sharedsecret is : " + voltageProperties.getSharedSecret());
-        logger.info("cachepath is : " + cachePath);
-
-        try{
+        String cachePath = voltageProperties.getBasePath() + "/" + wilayah;
+        try {
             // Create the context for crypto operations
             library = new LibraryContext.Builder()
                     .setPolicyURL(voltageProperties.getPolicyUrl())
                     .setFileCachePath(cachePath)
                     .setTrustStorePath(voltageProperties.getTrustStorePath())
-                    .setClientIdProduct(voltageProperties.getClientId(),voltageProperties.getClientIdVersion())
+                    .setClientIdProduct(voltageProperties.getClientId(), voltageProperties.getClientIdVersion())
                     .build();
 
             // Protect and access the date
@@ -127,14 +120,10 @@ public class CacheMakerServiceImpl implements CacheMakerService {
             fpe.protect("testCase");
             return cachePath;
 
-        }catch (VeException ex) {
-            System.out.println("Failed: " + ex.getDetailedMessage());
+        } catch (VeException ex) {
+            logger.error("Failed: {}", ex.getDetailedMessage());
             return null;
-        } catch (Throwable ex) {
-            System.out.println("Failed: Unexpected exception" + ex);
-            ex.printStackTrace();
-            return null;
-        }finally {
+        } finally {
             if (fpe != null) {
                 fpe.delete();
             }
@@ -145,27 +134,30 @@ public class CacheMakerServiceImpl implements CacheMakerService {
         }
     }
 
-    private void deleteDirectoryRecursively(Path path){
-        try {
-            if (Files.exists(path)) {
-                Files.walk(path)
-                        .sorted(Comparator.reverseOrder()) // Delete files before directories
+    private void deleteDirectoryRecursively(Path path) {
+        if (Files.exists(path)) {
+            try (Stream<Path> walk = Files.walk(path)) {
+                walk.sorted(Comparator.reverseOrder())
                         .forEach(p -> {
                             try {
                                 Files.delete(p);
                             } catch (IOException e) {
-                                throw new RuntimeException("Failed to delete: " + p, e);
+                                logger.warn("Failed to delete path: {}", p, e);
                             }
                         });
+            } catch (IOException ex) {
+                logger.error("Failed to walk and delete directory: {}", path, ex);
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
         }
     }
+
     // Utility method to zip a folder
     private void zipDirectory(Path sourceDirPath, Path zipPath) throws IOException {
-        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
-            Files.walk(sourceDirPath)
+        try (
+                ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath));
+                Stream<Path> paths = Files.walk(sourceDirPath)
+        ) {
+            paths
                     .filter(path -> !Files.isDirectory(path))
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
@@ -190,9 +182,9 @@ public class CacheMakerServiceImpl implements CacheMakerService {
         }
     }
 
-    private void getZipFile(HttpServletResponse response ,String cachePath, String wilayah){
+    private void getZipFile(HttpServletResponse response, String cachePath, String wilayah) {
         Path zipPath = null;
-        try(ServletOutputStream out = response.getOutputStream()){
+        try (ServletOutputStream out = response.getOutputStream()) {
             if (cachePath == null || cachePath.isBlank()) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to generate cache");
                 return;
@@ -205,16 +197,18 @@ public class CacheMakerServiceImpl implements CacheMakerService {
 
             Files.copy(zipPath, out);
             out.flush();
-        }catch (IOException ex){
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            logger.error("Failed to stream zip to response", ex);
         } finally {
             // Cleanup
-            deleteDirectoryRecursively(Paths.get(cachePath)); // cache folder
+            if( cachePath != null){
+                deleteDirectoryRecursively(Paths.get(cachePath)); // cache folder
+            }
             if (zipPath != null) {
                 try {
                     Files.deleteIfExists(zipPath);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.warn("Failed to delete zip file: {}", zipPath, e);
                 }
             }
         }

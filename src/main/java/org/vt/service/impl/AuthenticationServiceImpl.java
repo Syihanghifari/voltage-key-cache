@@ -8,12 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.vt.LRUCacheComponent;
 import org.vt.config.mybatis.MyBatisUtils;
-import org.vt.config.mybatis.entity.Menus;
-import org.vt.config.mybatis.entity.Permissions;
-import org.vt.config.mybatis.entity.Role;
-import org.vt.config.mybatis.entity.User;
+import org.vt.config.mybatis.entity.*;
 import org.vt.config.mybatis.mapper.UserMapper;
+import org.vt.config.util.AuthenticationException;
 import org.vt.config.util.JwtUtil;
 import org.vt.model.AuthResponse;
 import org.vt.model.LoginRequest;
@@ -21,14 +20,13 @@ import org.vt.model.MessageResponse;
 import org.vt.model.RegisterRequest;
 import org.vt.service.AuthenticationService;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private Logger logger = LoggerFactory.getLogger("Voltage Backend Service");
+    private final Logger logger = LoggerFactory.getLogger("Authentication Service");
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -42,40 +40,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
         try (SqlSession session = sqlSessionFactory.openSession(false)) {
             UserMapper userMapper = myBatisUtils.createMapper(UserMapper.class, session);
-            User user = userMapper.getUserByUsername(request.getUsername());
+            User user = LRUCacheComponent.getInstance().getUserByUsername(request.getUsername());
             if (user == null) {
-                throw new RuntimeException("User not found");
+                throw new AuthenticationException("User not found");
             }
 
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new RuntimeException("Incorrect password");
+                throw new AuthenticationException("Incorrect password");
             }
+            Integer rolesId = userMapper.getUserRolesByUserId(user.getId());
 
-            // Fetch roles from DB
-            List<Role> roles = userMapper.getUserRoles(user.getId());
-            List<String> roleNames = roles.stream()
-                    .map(Role::getName)
-                    .collect(Collectors.toList());
+            Role userRole = getRoleByUserId(rolesId);
 
-            List<Permissions> listPermissions = userMapper.getUserPermissions(user.getId());
-            List<Menus> listMenus = new ArrayList<>();
-            for(Permissions permissions: listPermissions){
-                Menus menu = userMapper.getMenusByPermissionsId(permissions.getPermissionsId());
-                if (menu != null) {
-                    listMenus.add(menu);
-                }
-            }
+            List<String> roleNames = Collections.singletonList(userRole.getName());
+
+            List<Permissions> listPermissions = getPermissionsByRoleId(rolesId);
+
+            List<Menus> listUserMenus = getMenusByPermissions(listPermissions);
 
             String token = jwtUtil.generateToken(user.getUsername(), roleNames);
-            return new AuthResponse(token,listMenus);
+            return new AuthResponse(token,listUserMenus);
         } catch (Exception e) {
-            logger.error("get data failed", e);
-            throw new RuntimeException(e);
+            logger.error("Login failed for user: {}", request.getUsername(), e);
+            throw new AuthenticationException("Login failed");
         }
     }
 
     @Override
-    public ResponseEntity<MessageResponse> register (RegisterRequest request){
+    public ResponseEntity<MessageResponse> register(RegisterRequest request){
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
         try (SqlSession session = sqlSessionFactory.openSession(false)) {
@@ -98,8 +90,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             session.commit();
             return ResponseEntity.ok(new MessageResponse("User registered successfully"));
         }catch (Exception e) {
-            logger.error("get data failed", e);
-            throw new RuntimeException(e);
+            logger.error("Register failed for user: {}", request.getUsername(), e);
+            throw new AuthenticationException("Register failed");
         }
     }
 
@@ -112,9 +104,44 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             UserMapper userMapper = myBatisUtils.createMapper(UserMapper.class, session);
             listUser = userMapper.getAllUser();
         }catch (Exception e) {
-            logger.error("get data failed", e);
-            throw new RuntimeException(e);
+            logger.error("Get Data All User Failed", e);
+            throw new AuthenticationException("Get All User Failed");
         }
         return ResponseEntity.ok(listUser);
     }
+
+    private List<Permissions> getPermissionsByRoleId(Integer roleId) {
+        List<RolePermissions> allMappings = LRUCacheComponent.getInstance().getAllRolePermissions();
+        Set<Integer> permissionIds = allMappings.stream()
+                .filter(rp -> rp.getRoleId().equals(roleId))
+                .map(RolePermissions::getPermissionsId)
+                .collect(Collectors.toSet());
+
+        List<Permissions> allPermissions = LRUCacheComponent.getInstance().getAllPermissions();
+        return allPermissions.stream()
+                .filter(p -> permissionIds.contains(p.getPermissionsId()))
+                .toList();
+    }
+
+    private List<Menus> getMenusByPermissions(List<Permissions> permissions) {
+        Set<Integer> permissionIds = permissions.stream()
+                .map(Permissions::getPermissionsId)
+                .collect(Collectors.toSet());
+
+        List<Menus> allMenus = LRUCacheComponent.getInstance().getAllMenus();
+        return allMenus.stream()
+                .filter(menu -> permissionIds.contains(menu.getPermissionsId()))
+                .toList();
+    }
+
+    private Role getRoleByUserId(Integer roleId) {
+        return LRUCacheComponent.getInstance()
+                .getAllRole()
+                .stream()
+                .filter(r -> r.getId().equals(roleId))
+                .findFirst()
+                .orElseThrow(() -> new AuthenticationException("Role not found for roleId = " + roleId));
+    }
+
+
 }

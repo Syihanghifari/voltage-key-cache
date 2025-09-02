@@ -16,7 +16,7 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
     @Value("${config.kafka.topic-name-1}")
     private String topicName;
 
-    private Logger logger = LoggerFactory.getLogger(KafkaProducerServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(KafkaProducerServiceImpl.class);
 
     private final KafkaTemplate<String, OrderObject> template;
 

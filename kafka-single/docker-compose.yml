@@ -45,7 +45,7 @@ services:
       kafka1:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c "kafka-topics --create --topic file-order --bootstrap-server kafka1:29092 --replication-factor 1 --partitions 18 --if-not-exists"
+      /bin/sh -c "kafka-topics --create --topic file-order --bootstrap-server kafka1:29092 --replication-factor 3 --partitions 18 --if-not-exists"
     networks:
       - ogya-network
 
@@ -55,7 +55,7 @@ services:
       kafka1:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c "kafka-topics --create --topic file-upload --bootstrap-server kafka1:29092 --replication-factor 1 --partitions 9 --if-not-exists"
+      /bin/sh -c "kafka-topics --create --topic file-upload --bootstrap-server kafka1:29092 --replication-factor 3 --partitions 9 --if-not-exists"
     networks:
       - ogya-network
 

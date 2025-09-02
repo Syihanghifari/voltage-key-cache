@@ -7,8 +7,8 @@ spring:
   application:
     name: voltage-key-cache
   kafka:
-    bootstrap-servers: 172.18.242.22:19091
-    schema-registry-servers: http://172.18.242.22:6969
+    bootstrap-servers: localhost:19091
+    schema-registry-servers: http://localhost:6969
     producer:
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -49,17 +49,17 @@ config:
     KeyDatasource:
       Enabled: true
       IdleTimeout: 900000
-      JdbcUrl: jdbc:postgresql://20.64.178.18:5432/postgres #192.168.181.133 #172.10.10.22
+      JdbcUrl: jdbc:postgresql://localhost:5432/securefileconfig #192.168.181.133 #172.10.10.22
       Username: postgres
       MaxLifetime: 1800000
       TestQuery: SELECT 1
-      Password: Ranger123!
+      Password: Ranger123456789!
       MinimumIdle: 1
       DriverClass: org.postgresql.Driver
       PoolName: KeyDatasource
       MaximumPoolSize: 200
       AutoCommit: true
-      ConnectionTimeout: 500
+      ConnectionTimeout: 5000
   kafka:
     topic-name-1: file-order
     topic-name-2: file-upload

@@ -2,12 +2,10 @@ package org.vt.controller;
 
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.vt.service.CacheMakerService;
-import org.vt.service.impl.CacheMakerServiceImpl;
 
 import javax.servlet.http.HttpServletResponse;
 

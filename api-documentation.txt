@@ -1,0 +1,41 @@
+
+http://20.64.178.18:8087/swagger-ui/index.html#/
+api list voltage key cache service:
+
+http://20.64.178.18:8087/auth/login --> login
+
+require header Authorization:Bearer token
+admin:
+http://20.64.178.18:8087/auth/register --> register new user as user role 										--> Add User --> /add-user
+http://20.64.178.18:8087/auth/get-user --> get all user															--> Get Users --> /get-users
+http://20.64.178.18:8087/config/set --> add new config/set														--> Add Config --> /add-config
+http://20.64.178.18:8087/config/get-all --> get-all-config														--> Get Config --> /get-config
+http://20.64.178.18:8087/file/get-csv --> ordering new csv file													--> Order File --> /order-file
+http://20.64.178.18:8087/file/get-status --> checking status for csv file has been ordered limit 20 offset 0	--> Get Status --> /get-status
+http://20.64.178.18:8087/voltage-key-cache/download --> downloading key-cache as zip							--> Key Cache --> /get-key-cache
+
+user:
+http://20.64.178.18:8087/file/get-csv --> ordering new csv file													--> Order File --> /order-file
+http://20.64.178.18:8087/file/get-status --> checking status for csv file has been ordered limit 20 offset 0	--> Get Status --> /get-status
+http://20.64.178.18:8087/voltage-key-cache/download --> downloading key-cache as zip							--> Key Cache --> /get-key-cache
+
+
+
+
+http://20.64.178.18:8087/auth/register
+{
+  "username": "string", --> anything
+  "password": "string", --> anything
+  "configId": 0 --> sesuai yang ada di confidId (servicenya belum dibikin)
+}
+
+http://20.64.178.18:8087/config/set
+{
+  "region": "string",  --> bebas nama kota example jakarta
+  "code": "string",    --> bebas untuk kode example ASD123
+  "sharedSecret": "string" --> bebas untuk sekarang diisi - aja
+}
+
+http://20.64.178.18:8087/file/get-status 
+limit --> limit data yang akan ditampilkan untuk page sekarang example 20
+offset --> offset data yang sekarang example 0

@@ -1,11 +1,8 @@
 package org.vt.config.mybatis.mapper;
 
 import org.apache.ibatis.annotations.*;
-import org.vt.config.mybatis.entity.Menus;
-import org.vt.config.mybatis.entity.Role;
-import org.vt.config.mybatis.entity.User;
+import org.vt.config.mybatis.entity.*;
 
-import org.vt.config.mybatis.entity.Permissions;
 import java.util.List;
 
 public interface UserMapper {
@@ -25,6 +22,11 @@ public interface UserMapper {
             "WHERE ur.user_id = #{userId}";
 
     final String GET_MENUS_BY_PERMISSIONS_ID = "SELECT * FROM menus m WHERE m.permissions_id = #{permissionsId}";
+    final String GET_USER_ROLES_BY_USER_ID = "SELECT * FROM user_roles WHERE user_id = #{userId}";
+    final String GET_ALL_ROLE_PERMISSIONS = "SELECT * FROM role_permissions";
+    final String GET_ALL_PERMISSIONS = "SELECT * FROM permissions";
+    final String GET_ALL_ROLES = "SELECT * FROM roles";
+    final String GET_ALL_MENUS = "SELECT * FROM menus";
 
     @Select(GET_USER_BY_USERNAME)
     @Results({
@@ -70,5 +72,38 @@ public interface UserMapper {
             @Result(property = "permissionsId", column = "permissions_id")
     })
     Menus getMenusByPermissionsId(Integer permissionsId);
+
+    @Select(GET_USER_ROLES_BY_USER_ID)
+    Integer getUserRolesByUserId(@Param("userId") Long userId);
+
+    @Select(GET_ALL_ROLES)
+    @Results({
+            @Result(property = "id", column = "id"),
+            @Result(property = "name", column = "name")
+    })
+    List<Role> getAllRoles();
+
+    @Select(GET_ALL_ROLE_PERMISSIONS)
+    @Results({
+            @Result(property = "roleId", column = "role_id"),
+            @Result(property = "permissionsId", column = "permissions_id")
+    })
+    List<RolePermissions> getAllRolePermissions();
+
+    @Select(GET_ALL_PERMISSIONS)
+    @Results({
+            @Result(property = "permissionsId", column = "permissions_id"),
+            @Result(property = "name", column = "name")
+    })
+    List<Permissions> getAllPermissions();
+
+    @Select(GET_ALL_MENUS)
+    @Results({
+            @Result(property = "menuId", column = "menu_id"),
+            @Result(property = "name", column = "name"),
+            @Result(property = "route", column = "route"),
+            @Result(property = "permissionsId", column = "permissions_id")
+    })
+    List<Menus> getAllMenus();
 
 }

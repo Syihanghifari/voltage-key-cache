@@ -10,7 +10,7 @@ import java.util.List;
 
 @Component
 public class JwtUtil {
-    private final String SECRET_KEY = "ogya123";
+    private final static String SECRET_KEY = "ogya123";
 
     // Generate token with roles
     public String generateToken(String username, List<String> roles) {

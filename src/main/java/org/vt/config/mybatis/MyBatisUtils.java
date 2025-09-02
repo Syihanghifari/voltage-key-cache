@@ -42,13 +42,6 @@ public class MyBatisUtils {
         return session.getMapper(t);
     }
 
-    public <T> T createMapper(Class<T> t, SqlSessionFactory sqlSessionFactory) {
-        if (session == null)
-            session = sqlSessionFactory.openSession();
-        session.getConfiguration().addMapper(t);
-        return session.getMapper(t);
-    }
-
     public void commitSession() {
         session.commit();
     }
