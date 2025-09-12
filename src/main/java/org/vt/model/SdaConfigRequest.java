@@ -1,17 +1,8 @@
-package org.vt.config.mybatis.entity;
+package org.vt.model;
 
-public class SdaConfig {
-    private String configId;
+public class SdaConfigRequest {
     private String region;
     private String code;
-
-    public String getConfigId() {
-        return configId;
-    }
-
-    public void setConfigId(String configId) {
-        this.configId = configId;
-    }
 
     public String getRegion() {
         return region;

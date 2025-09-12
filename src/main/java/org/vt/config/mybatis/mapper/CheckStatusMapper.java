@@ -32,11 +32,11 @@ public interface CheckStatusMapper {
             "        username," +
             "        status," +
             "        CASE " +
-            "            WHEN status = 'success' THEN NULL" +
+            "            WHEN status = 'success' or status = 'failed' THEN NULL" +
             "            ELSE ROW_NUMBER() OVER (PARTITION BY status ORDER BY last_updated)" +
             "        END AS \"order\"," +
             "        CASE " +
-            "            WHEN status = 'success' THEN NULL" +
+            "            WHEN status = 'success' or status = 'failed' THEN NULL" +
             "            ELSE COUNT(*) OVER (PARTITION BY status)" +
             "        END AS total_order," +
             "        last_updated," +

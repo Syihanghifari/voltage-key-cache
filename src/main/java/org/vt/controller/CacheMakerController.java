@@ -32,4 +32,10 @@ public class CacheMakerController {
         cacheMakerService.getCacheZip(authentication,response);
     }
 
+    @GetMapping("/installer/download")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public void getInstallerZip(HttpServletResponse response){
+        cacheMakerService.getFpeProcessorZip(response);
+    }
+
 }

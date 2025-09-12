@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 import org.vt.config.mybatis.entity.SdaConfig;
+import org.vt.model.SdaConfigRequest;
 
 import java.util.List;
 
@@ -13,14 +14,13 @@ public interface SdaConfigMapper {
 
     final String GET_ALL_SDA_CONFIG_ID = "SELECT * FROM sda_config";
 
-    final String INSERT_SDA_CONFIG_BY_CONFIG_ID = "INSERT INTO sda_config (region, code, shared_secret) " +
-            "VALUES (#{region}, #{code}, #{sharedSecret})";
+    final String INSERT_SDA_CONFIG_BY_CONFIG_ID = "INSERT INTO sda_config (region, code) " +
+            "VALUES (#{region}, #{code})";
 
     @Select(GET_SDA_CONFIG_BY_CONFIG_ID)
     @Results({
             @Result(property = "region", column = "region"),
-            @Result(property = "code", column = "code"),
-            @Result(property = "sharedSecret", column = "shared_secret")
+            @Result(property = "code", column = "code")
     })
     SdaConfig getSdaConfigByConfidId(Long configId);
 
@@ -28,11 +28,10 @@ public interface SdaConfigMapper {
     @Results({
             @Result(property = "configId", column = "config_id"),
             @Result(property = "region", column = "region"),
-            @Result(property = "code", column = "code"),
-            @Result(property = "sharedSecret", column = "shared_secret")
+            @Result(property = "code", column = "code")
     })
     List<SdaConfig> getAllSdaConfig();
 
     @Insert(INSERT_SDA_CONFIG_BY_CONFIG_ID)
-    void insertSdaConfig(SdaConfig sdaConfig);
+    void insertSdaConfig(SdaConfigRequest sdaConfigRequest);
 }

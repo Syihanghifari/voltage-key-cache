@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.vt.config.mybatis.entity.SdaConfig;
 import org.vt.model.MessageResponse;
+import org.vt.model.SdaConfigRequest;
 import org.vt.service.SdaConfigService;
 
 import java.util.List;
@@ -21,8 +22,8 @@ public class SdaConfigController {
 
     @PostMapping("/set")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> setSdaConfig(@RequestBody SdaConfig sdaConfig){
-        return sdaConfigService.insertSdaConfig(sdaConfig);
+    public ResponseEntity<MessageResponse> setSdaConfig(@RequestBody SdaConfigRequest sdaConfigRequest){
+        return sdaConfigService.insertSdaConfig(sdaConfigRequest);
     }
 
     @GetMapping("/get-all")

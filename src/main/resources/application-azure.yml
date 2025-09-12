@@ -1,65 +1,67 @@
 server:
-  port: 8087
+  port: ${SERVER_PORT:8087}
   tomcat:
     min-spare: 25
     max-threads: 750
+
 spring:
+  profiles: azure
   application:
-    name: voltage-key-cache
+    name: ${SPRING_APPLICATION_NAME:voltage-key-cache}
   kafka:
-    bootstrap-servers: 172.18.242.22:19091
-    schema-registry-servers: http://172.18.242.22:6969
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    schema-registry-servers: ${SPRING_KAFKA_SCHEMA_REGISTRY_SERVERS}
     producer:
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      acks: all
-      batch-size: 64KB
-      buffer-memory: 64MB
-      linger-ms: 10
-      max-block-ms: 60000
-      retries: 10
+      value-serializer: ${SPRING_KAFKA_PRODUCER_VALUE_SERIALIZER}
+      key-serializer: ${SPRING_KAFKA_PRODUCER_KEY_SERIALIZER}
+      acks: ${SPRING_KAFKA_PRODUCER_ACKS}
+      batch-size: ${SPRING_KAFKA_PRODUCER_BATCH_SIZE}
+      buffer-memory: ${SPRING_KAFKA_PRODUCER_BUFFER_MEMORY}
+      linger-ms: ${SPRING_KAFKA_PRODUCER_LINGER_MS}
+      max-block-ms: ${SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS}
+      retries: ${SPRING_KAFKA_PRODUCER_RETRIES}
     listener:
-      ack-mode: record
+      ack-mode: ${SPRING_KAFKA_LISTENER_ACK_MODE}
 
 logging:
   level:
-    root: INFO
+    root: ${LOGGING_LEVEL_ROOT:INFO}
 
 management:
   endpoints:
     web:
       exposure:
         include: info,refresh,health,bus-refresh,busrefresh
-
   endpoint:
     refresh:
       enabled: true
+
 config:
   voltage:
-    PolicyUrl: https://voltage-pp-0000.opentext.co.id/policy/clientPolicy.xml
-    TrustStorePath: /opt/voltage/simpleapi/trustStore-cloud
-    BasePath: /opt/voltage/simpleapi
-    SharedSecret: voltage123
-    AlphanumericFormat: alphanumeric
-    NumericFormat: numeric
-    AlphaFormat: alpha
-    ClientId: Simple_API_Java_Date_Sample
-    ClientIdVersion: 6.22.0.0
+    PolicyUrl: ${CONFIG_VOLTAGE_POLICYURL}
+    TrustStorePath: ${CONFIG_VOLTAGE_TRUSTSTOREPATH}
+    BasePath: ${CONFIG_VOLTAGE_BASEPATH}
+    SharedSecret: ${CONFIG_VOLTAGE_SHAREDSECRET}
+    AlphanumericFormat: ${CONFIG_VOLTAGE_ALPHANUMERICFORMAT}
+    NumericFormat: ${CONFIG_VOLTAGE_NUMERICFORMAT}
+    AlphaFormat: ${CONFIG_VOLTAGE_ALPHAFORMAT}
+    ClientId: ${CONFIG_VOLTAGE_CLIENTID}
+    ClientIdVersion: ${CONFIG_VOLTAGE_CLIENTIDVERSION}
   datasource:
     KeyDatasource:
-      Enabled: true
-      IdleTimeout: 900000
-      JdbcUrl: jdbc:postgresql://20.64.178.18:5432/postgres #192.168.181.133 #172.10.10.22
-      Username: postgres
-      MaxLifetime: 1800000
-      TestQuery: SELECT 1
-      Password: Ranger123!
-      MinimumIdle: 1
-      DriverClass: org.postgresql.Driver
-      PoolName: KeyDatasource
-      MaximumPoolSize: 200
-      AutoCommit: true
-      ConnectionTimeout: 500
+      Enabled: ${CONFIG_DATASOURCE_KEYDATASOURCE_ENABLED}
+      IdleTimeout: ${CONFIG_DATASOURCE_KEYDATASOURCE_IDLETIMEOUT}
+      JdbcUrl: ${CONFIG_DATASOURCE_KEYDATASOURCE_JDBCURL}
+      Username: ${CONFIG_DATASOURCE_KEYDATASOURCE_USERNAME}
+      Password: ${CONFIG_DATASOURCE_KEYDATASOURCE_PASSWORD}
+      MaxLifetime: ${CONFIG_DATASOURCE_KEYDATASOURCE_MAXLIFETIME}
+      TestQuery: ${CONFIG_DATASOURCE_KEYDATASOURCE_TESTQUERY}
+      MinimumIdle: ${CONFIG_DATASOURCE_KEYDATASOURCE_MINIMUMIDLE}
+      DriverClass: ${CONFIG_DATASOURCE_KEYDATASOURCE_DRIVERCLASS}
+      PoolName: ${CONFIG_DATASOURCE_KEYDATASOURCE_POOLNAME}
+      MaximumPoolSize: ${CONFIG_DATASOURCE_KEYDATASOURCE_MAXIMUMPOOLSIZE}
+      AutoCommit: ${CONFIG_DATASOURCE_KEYDATASOURCE_AUTOCOMMIT}
+      ConnectionTimeout: ${CONFIG_DATASOURCE_KEYDATASOURCE_CONNECTIONTIMEOUT}
   kafka:
-    topic-name-1: file-order
-    topic-name-2: file-upload
+    topic-name-1: ${CONFIG_KAFKA_TOPIC_NAME_1}
+    topic-name-2: ${CONFIG_KAFKA_TOPIC_NAME_2}

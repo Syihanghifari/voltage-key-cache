@@ -12,6 +12,7 @@ import org.vt.config.mybatis.entity.SdaConfig;
 import org.vt.config.mybatis.mapper.SdaConfigMapper;
 import org.vt.config.util.SdaConfigException;
 import org.vt.model.MessageResponse;
+import org.vt.model.SdaConfigRequest;
 import org.vt.service.SdaConfigService;
 
 import java.util.ArrayList;
@@ -23,12 +24,12 @@ public class SdaConfigServiceImpl implements SdaConfigService {
     private final Logger logger = LoggerFactory.getLogger("SDA Config Service");
 
     @Override
-    public ResponseEntity<MessageResponse> insertSdaConfig(SdaConfig sdaConfig){
+    public ResponseEntity<MessageResponse> insertSdaConfig(SdaConfigRequest sdaConfigRequest){
         MyBatisUtils myBatisUtils = new MyBatisUtils();
         SqlSessionFactory sqlSessionFactory = myBatisUtils.createFactory();
         try(SqlSession session = sqlSessionFactory.openSession(false)){
             SdaConfigMapper sdaConfigMapper = myBatisUtils.createMapper(SdaConfigMapper.class,session);
-            sdaConfigMapper.insertSdaConfig(sdaConfig);
+            sdaConfigMapper.insertSdaConfig(sdaConfigRequest);
 
             session.commit();
         }catch (Exception e) {
